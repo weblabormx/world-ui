@@ -2,6 +2,67 @@
 
 World UI is a component library, based on [WireUI](https://github.com/wireui/wireui) for easy implementation with [Weblabor World API](https://world.weblabor.mx).
 
+## Install
+
+Install the package through composer using:
+
+```
+composer require weblabormx/world-ui
+```
+
+Then, configure on your `config/services.php` your World API Token.
+
+```php
+[
+    //...
+    'weblabor' => [
+        'world' => [
+            'token' => env('WEBLABOR_WORLD_TOKEN'),
+            // 'endpoint' => env('WEBLABOR_WORLD_ENDPOINT') // OPTIONAL
+        ]
+    ]
+];
+```
+
+### Publishing assets
+
+You can optionally publish the `wireui.php` config file using:
+
+```
+php artisan vendor:publish --tag='worldui.config'
+```
+
+**Default config:**
+
+```php
+<?php
+
+use WeblaborMx\WorldUi\Components;
+
+return [
+    'endpoint' => rtrim(config('services.weblabor.world.endpoint', env('WEBLABOR_WORLD_ENDPOINT', 'https://world.weblabor.mx/api')), '/'),
+
+    'api_token' => config('services.weblabor.world.token', env('WEBLABOR_WORLD_TOKEN')),
+
+    'components' => [
+        [
+            'class' => Components\CountrySelect::class,
+            'alias' => 'country-select'
+        ],
+        [
+            'class' => Components\DivisionSelect::class,
+            'alias' => 'division-select'
+        ],
+        [
+            'class' => Components\DivisionSearchSelect::class,
+            'alias' => 'division-search'
+        ],
+    ]
+];
+```
+
+---
+
 ## Components
 
 ### Country Select
