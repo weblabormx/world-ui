@@ -1,0 +1,28 @@
+{
+    "name": "weblabormx/world-ui",
+    "description": "UI Component library built on top of WireUI that implement Weblabor World service out of the box",
+    "autoload": {
+        "psr-4": {
+            "WeblaborMx\\WorldUi\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Carlos Escobar",
+            "email": "carlosescobar@weblabor.mx"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "wireui/wireui": "^1.17",
+        "illuminate/support": "*"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "WeblaborMx\\WorldUi\\Providers\\WorldUiServiceProvider"
+            ],
+            "aliases": []
+        }
+    }
+}
