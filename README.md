@@ -89,6 +89,7 @@ return [
 
 **Unique Fields**
 - id: The ID of the division to get the children from
+- regex: An optional regex to match the names of the countries
 
 [Check all fields](https://livewire-wireui.com/docs/select#select-options)
 
