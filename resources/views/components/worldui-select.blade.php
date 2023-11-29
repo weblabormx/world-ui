@@ -1,4 +1,4 @@
-@props(['alwaysFetch' => false])
+@props(['alwaysFetch' => true])
 @component('worldui::components.select-wrapper', [
     'uid' => $attributes->get('wire:key', \Str::random()),
     'regex' => $attributes->get('regex'),
@@ -14,7 +14,20 @@
             : null"
         :options="isset($api) ? null : []"
         :always-fetch="$alwaysFetch"
-        x-init="$watch('displayOptions', (v) => {
+        x-init="$nextTick(() => {
+            fetchOptions();
+            const timeout = () => setTimeout(() => {
+                console.info('Syncing world input');
+                if (!asyncData.fetching) {
+                    syncSelectedFromWireModel();
+                    return;
+                }
+                timeout();
+            }, 500);
+            timeout();
+        });
+        
+        $watch('displayOptions', (v) => {
             const regex = @toJs(addslashes($attributes->get('regex')));
         
             if (!regex) {
