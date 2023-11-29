@@ -14,35 +14,7 @@
             : null"
         :options="isset($api) ? null : []"
         :always-fetch="$alwaysFetch"
-        x-init="$nextTick(() => {
-            fetchOptions();
-            const timeout = () => setTimeout(() => {
-                console.info('Syncing world input');
-                if (!asyncData.fetching) {
-                    syncSelectedFromWireModel();
-                    return;
-                }
-                timeout();
-            }, 500);
-            timeout();
-        });
-        
-        $watch('displayOptions', (v) => {
-            const regex = @toJs(addslashes($attributes->get('regex')));
-        
-            if (!regex) {
-                return;
-            }
-        
-            v = Alpine.raw(v);
-        
-            v.map((d) => {
-                d.label = (new RegExp(regex).exec(d.label) ?? [])[0] ?? d.label;
-                return d;
-            })
-        
-            displayOptions = v;
-        })"
+        x-init="$nextTick(() => initWorld())"
         {{ $attributes }}>
         @isset($beforeOptions)
             <x-slot name="beforeOptions">

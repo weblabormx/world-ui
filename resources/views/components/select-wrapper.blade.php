@@ -1,7 +1,9 @@
 @props([
     'uid' => \Str::random(),
+    'regex' => null,
 ])
-<div id="{{ $uid }}">
+
+<div id="{{ $uid }}" data-regex="@toJs($regex)">
 
     {{ $slot }}
 
@@ -10,6 +12,48 @@
             const overwrite = () => {
                 const el = document.querySelector('[id="{{ $uid }}"]>div');
                 const data = Alpine.$data(el);
+
+                data.regex = el.parentElement.dataset?.regex?.slice(1, -1);
+                data.initWorld = function() {
+                    this.$nextTick(() => {
+                        this.fetchOptions();
+
+                        let tries = 0;
+                        const timeout = () => setTimeout(() => {
+                            tries++;
+                            console.info('Syncing world input');
+                            if (!this.asyncData.fetching) {
+                                this.syncSelectedFromWireModel();
+                                return;
+                            }
+
+                            if (tries > 10) {
+                                return;
+                            }
+                            timeout();
+                        }, 500);
+
+                        timeout();
+                    });
+
+                    this.$watch('options', (value) => {
+                        this.$nextTick(() => {
+                            if (!this.regex) {
+                                return;
+                            }
+
+                            let newOptions = Alpine.raw(this.displayOptions);
+
+                            newOptions = value.map((d) => {
+                                d = Alpine.raw(d);
+                                d.label = (new RegExp(this.regex).exec(d.label) ?? [])[0] ?? d.label;
+                                return d;
+                            });
+
+                            this.displayOptions = newOptions;
+                        })
+                    })
+                };
 
                 data.makeRequest = function(params = {}) {
                     const {
