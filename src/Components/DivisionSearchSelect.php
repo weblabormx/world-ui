@@ -13,7 +13,8 @@ class DivisionSearchSelect extends WorldComponent
     public function __construct(
         public ?string $search = null,
         public string|int|null $parentId = null,
+        ?string $regex = null
     ) {
-        parent::__construct();
+        parent::__construct(regex: $regex);
     }
 }

@@ -10,4 +10,10 @@ class CountrySelect extends WorldComponent
     {
         return "/countries?fields=id,name";
     }
+
+    public function __construct(
+        ?string $regex = null
+    ) {
+        parent::__construct(regex: $regex);
+    }
 }

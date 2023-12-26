@@ -13,8 +13,9 @@ abstract class WorldComponent extends Select
 
     abstract protected function endpoint(): string;
 
-    public function __construct()
-    {
+    public function __construct(
+        public ?string $regex = null
+    ) {
         parent::__construct(
             options: $this->getOptions(),
             optionLabel: 'name',
@@ -50,7 +51,22 @@ abstract class WorldComponent extends Select
         $options = Cache::remember(
             $key,
             now()->addMinutes($this->cacheMinutes),
-            fn () => collect(World::getClient()->makeSafeCall($this->endpoint()))
+            function () {
+                $data = collect(World::getClient()->makeSafeCall($this->endpoint()));
+
+                if ($this->regex) {
+                    $data = $data->map(function ($v) {
+                        preg_match("/$this->regex/", $v['name'], $matches);
+                        if ($matches) {
+                            $v['name'] = $matches[0];
+                        }
+
+                        return $v;
+                    })->filter(fn ($v) => !(is_null($v) || empty($v)));
+                }
+
+                return $data;
+            }
         );
 
         if ($options->isEmpty()) {
@@ -62,6 +78,6 @@ abstract class WorldComponent extends Select
 
     protected function cacheKey(): string
     {
-        return md5("worldui.native-select:{$this->endpoint()}");
+        return md5("worldui.native-select:{$this->endpoint()}{$this->regex}");
     }
 }

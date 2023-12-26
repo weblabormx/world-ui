@@ -11,7 +11,8 @@ class DivisionSelect extends WorldComponent
 
     public function __construct(
         public string|int|null $id = null,
+        ?string $regex = null
     ) {
-        parent::__construct();
+        parent::__construct(regex: $regex);
     }
 }
