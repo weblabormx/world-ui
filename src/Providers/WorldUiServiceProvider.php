@@ -4,6 +4,7 @@ namespace WeblaborMx\WorldUi\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\Compilers\BladeCompiler;
+use WeblaborMx\World\World;
 
 class WorldUiServiceProvider extends ServiceProvider
 {
@@ -12,6 +13,12 @@ class WorldUiServiceProvider extends ServiceProvider
     {
         $this->loadConfigs();
         $this->loadComponents();
+    }
+
+    public function boot()
+    {
+        World::setApiBase(config('worldui.endpoint'));
+        World::init(config('worldui.api_token'));
     }
 
     protected function loadConfigs()

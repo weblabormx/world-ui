@@ -2,14 +2,18 @@
 
 namespace WeblaborMx\WorldUi\Components;
 
-use Illuminate\View\Component;
-
-class CountrySelect extends Component
+class CountrySelect extends WorldComponent
 {
-    public $api = '/countries?fields=id,name';
+    protected int $cacheMinutes = 60;
 
-    public function render()
+    protected function endpoint(): string
     {
-        return view('worldui::components.worldui-select');
+        return "/countries?fields=id,name";
+    }
+
+    public function __construct(
+        ?string $regex = null
+    ) {
+        parent::__construct(regex: $regex);
     }
 }
