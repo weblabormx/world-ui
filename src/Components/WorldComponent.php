@@ -21,11 +21,6 @@ abstract class WorldComponent extends Select
         );
     }
 
-    private function cacheKey(): string
-    {
-        return md5("worldui.native-select:{$this->endpoint()}");
-    }
-
     public function getOptions(): Collection
     {
         $key = $this->cacheKey();
@@ -42,5 +37,17 @@ abstract class WorldComponent extends Select
         }
 
         return $options;
+    }
+
+    protected function overwriteVariables(array $vars): void
+    {
+        foreach ($vars as $var => $value) {
+            $this->{$var} = $value;
+        }
+    }
+
+    protected function cacheKey(): string
+    {
+        return md5("worldui.native-select:{$this->endpoint()}");
     }
 }
