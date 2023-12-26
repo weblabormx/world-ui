@@ -16,9 +16,30 @@ abstract class WorldComponent extends Select
     public function __construct()
     {
         parent::__construct(
-            optionKeyValue: true,
-            options: $this->getOptions()->mapWithKeys(fn ($v) => [$v['id'] => $v['name']])
+            options: $this->getOptions(),
+            optionLabel: 'name',
+            optionValue: 'id'
         );
+    }
+
+    protected function getView(): string
+    {
+        return 'worldui::components.select';
+    }
+
+    public function render(): \Closure
+    {
+        return function (array $data) {
+            // Automatically inherit WireUI options
+            $data['attributes']->setAttributes(
+                collect($data)->filter(
+                    fn ($v, $k) => !str_starts_with($k, '__') && $k !== 'attributes' && is_scalar($v)
+                )->merge($data['attributes'])
+                    ->toArray()
+            );
+
+            return parent::render()($data);
+        };
     }
 
     public function getOptions(): Collection
@@ -37,13 +58,6 @@ abstract class WorldComponent extends Select
         }
 
         return $options;
-    }
-
-    protected function overwriteVariables(array $vars): void
-    {
-        foreach ($vars as $var => $value) {
-            $this->{$var} = $value;
-        }
     }
 
     protected function cacheKey(): string

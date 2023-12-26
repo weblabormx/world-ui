@@ -29,6 +29,7 @@ class WorldUiServiceProvider extends ServiceProvider
             "{$root}/config/worldui.php" => config_path('worldui.php')
         ], 'worldui.config');
 
+        $this->loadViewsFrom("{$root}/resources/views", 'worldui');
         $this->loadTranslationsFrom("{$root}/lang", 'worldui');
         $this->mergeConfigFrom("{$root}/config/worldui.php", 'worldui');
     }

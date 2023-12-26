@@ -11,18 +11,7 @@ class DivisionSelect extends WorldComponent
 
     public function __construct(
         public string|int|null $id = null,
-        public bool $clearable = true,
-        public bool $searchable = true,
-        public bool $multiselect = false,
-        public bool $withoutItemsCount = false,
-        public string $rightIcon = 'selector',
-        public ?string $icon = null,
-        public ?string $label = null,
-        public ?string $hint = null,
-        public ?string $placeholder = null,
-        public bool $hideEmptyMessage = false,
     ) {
         parent::__construct();
-        $this->overwriteVariables(get_defined_vars());
     }
 }
