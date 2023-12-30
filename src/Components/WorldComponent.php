@@ -4,8 +4,7 @@ namespace WeblaborMx\WorldUi\Components;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use ReflectionObject;
-use ReflectionProperty;
+use Illuminate\View\ComponentAttributeBag;
 use WeblaborMx\World\World;
 use WireUi\View\Components\Select;
 
@@ -41,13 +40,11 @@ abstract class WorldComponent extends Select
             );
 
             // Override the props of the parent without constructor reassingment
-            $childProps = collect($data['attributes'])->intersectByKeys($data);
-            collect((new ReflectionObject($this))->getProperties(ReflectionProperty::IS_PUBLIC))
-                ->pluck('name')
-                ->each(function ($v) use ($childProps) {
-                    if ($childProps->has($v)) {
-                        $this->{$v} = $childProps[$v];
-                    }
+            collect($data['attributes'])
+                ->intersectByKeys($this->extractPublicProperties())
+                ->except('attributes')
+                ->each(function ($v, $k) {
+                    $this->{$k} = $v;
                 });
 
             return parent::render()($data);
