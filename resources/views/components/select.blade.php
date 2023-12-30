@@ -1,6 +1,6 @@
 @props(['uid' => str()->random()])
 <div id="{{ $uid }}">
-    <x-select x-init="$nextTick(() => initWorld())" :options="$options" {{ $attributes }} />
+    <x-select x-init="$nextTick(() => initWorld())" :options="$getOptions()" {{ $attributes }} />
     <script>
         (() => {
             const el = (parent = window.document) => parent.querySelector('[id="{{ $uid }}"]');

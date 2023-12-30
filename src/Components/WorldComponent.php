@@ -4,20 +4,21 @@ namespace WeblaborMx\WorldUi\Components;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use ReflectionObject;
+use ReflectionProperty;
 use WeblaborMx\World\World;
 use WireUi\View\Components\Select;
 
 abstract class WorldComponent extends Select
 {
     protected int $cacheMinutes = 1;
+    public ?string $regex = null;
 
     abstract protected function endpoint(): string;
 
-    public function __construct(
-        public ?string $regex = null
-    ) {
+    public function __construct()
+    {
         parent::__construct(
-            options: $this->getOptions(),
             optionLabel: 'name',
             optionValue: 'id'
         );
@@ -38,6 +39,16 @@ abstract class WorldComponent extends Select
                 )->merge($data['attributes'])
                     ->toArray()
             );
+
+            // Override the props of the parent without constructor reassingment
+            $childProps = collect($data['attributes'])->intersectByKeys($data);
+            collect((new ReflectionObject($this))->getProperties(ReflectionProperty::IS_PUBLIC))
+                ->pluck('name')
+                ->each(function ($v) use ($childProps) {
+                    if ($childProps->has($v)) {
+                        $this->{$v} = $childProps[$v];
+                    }
+                });
 
             return parent::render()($data);
         };
