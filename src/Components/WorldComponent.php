@@ -4,20 +4,28 @@ namespace WeblaborMx\WorldUi\Components;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use WeblaborMx\World\World;
+use ReflectionClass;
+use ReflectionProperty;
+use WeblaborMx\World\Entities\Division;
 use WireUi\View\Components\Select;
 
 abstract class WorldComponent extends Select
 {
     protected int $cacheMinutes = 1;
+    public ?string $regex = null;
 
-    abstract protected function endpoint(): string;
+    /** @return Division[] */
+    abstract protected function options(): array;
 
-    public function __construct(
-        public ?string $regex = null
-    ) {
+    /** @var callable|null */
+    public mixed $formatUsing = null;
+
+    /** @var callable|null */
+    public mixed $filterUsing = null;
+
+    public function __construct()
+    {
         parent::__construct(
-            options: $this->getOptions(),
             optionLabel: 'name',
             optionValue: 'id'
         );
@@ -31,12 +39,30 @@ abstract class WorldComponent extends Select
     public function render(): \Closure
     {
         return function (array $data) {
-            // Automatically inherit WireUI options
+            $classProps = collect((new ReflectionClass(self::class))
+                ->getProperties(ReflectionProperty::IS_PUBLIC))
+                ->where('class', self::class)
+                ->pluck('name');
+
+            // Override the props of the parent without constructor reassingment
+            collect($data['attributes'])
+                ->intersectByKeys($this->extractPublicProperties())
+                ->except('attributes')
+                ->each(function ($v, $k) use ($classProps, $data) {
+                    $this->{$k} = $v;
+
+                    if ($classProps->contains($k)) {
+                        // Prevent the WorldUI prop from passing to WireUI
+                        unset($data['attributes'][$k]);
+                    }
+                });
+
+            // Automatically pass WireUI options to $attributes
             $data['attributes']->setAttributes(
-                collect($data)->filter(
-                    fn ($v, $k) => !str_starts_with($k, '__') && $k !== 'attributes' && is_scalar($v)
-                )->merge($data['attributes'])
-                    ->toArray()
+                collect($data)->only(Select::extractConstructorParameters())
+                    ->merge($data['attributes'])
+                    ->except('options')
+                    ->all()
             );
 
             return parent::render()($data);
@@ -52,17 +78,29 @@ abstract class WorldComponent extends Select
             $key,
             now()->addMinutes($this->cacheMinutes),
             function () {
-                $data = collect(World::getClient()->makeSafeCall($this->endpoint()));
+                $data = collect($this->options())
+                    ->sortBy('name');
+
+                if ($this->filterUsing) {
+                    $data = $data->filter($this->filterUsing);
+                }
+
+                if ($this->formatUsing) {
+                    $data = $data->map($this->formatUsing);
+                }
 
                 if ($this->regex) {
-                    $data = $data->map(function ($v) {
-                        preg_match("/$this->regex/", $v['name'], $matches);
+                    $data = $data->map(function (Division $v) {
+                        preg_match("/$this->regex/", $v->name, $matches);
+
                         if ($matches) {
-                            $v['name'] = $matches[0];
+                            $v->name = $matches[0];
                         }
 
                         return $v;
-                    })->filter(fn ($v) => !(is_null($v) || empty($v)));
+                    })->filter(
+                        fn (Division $v) => !(is_null($v->name) || empty($v->name))
+                    );
                 }
 
                 return $data;
@@ -78,6 +116,13 @@ abstract class WorldComponent extends Select
 
     protected function cacheKey(): string
     {
-        return md5("worldui.native-select:{$this->endpoint()}{$this->regex}");
+        $data = collect($this->extractConstructorParameters())
+            ->map(fn ($v) => $this->{$v})
+            ->filter(fn ($v) => is_scalar($v))
+            ->implode('|');
+
+        $data = substr($data, 0, 128);
+
+        return md5("worldui.native-select:{$data}|{$this->regex}");
     }
 }

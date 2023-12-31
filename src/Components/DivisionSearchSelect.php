@@ -2,19 +2,24 @@
 
 namespace WeblaborMx\WorldUi\Components;
 
+use WeblaborMx\World\Entities\Division;
 
 class DivisionSearchSelect extends WorldComponent
 {
-    protected function endpoint(): string
+
+    protected function options(): array
     {
-        return "/search/{$this->search}/{$this->parentId}?fields=id,name";
+        return Division::search(
+            "$this->search",
+            $this->parentId,
+            ['id', 'name']
+        ) ?? [];
     }
 
     public function __construct(
         public ?string $search = null,
-        public string|int|null $parentId = null,
-        ?string $regex = null
+        public string|int|null $parentId = null
     ) {
-        parent::__construct(regex: $regex);
+        parent::__construct();
     }
 }

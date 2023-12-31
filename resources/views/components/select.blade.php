@@ -1,6 +1,15 @@
 @props(['uid' => str()->random()])
 <div id="{{ $uid }}">
-    <x-select x-init="$nextTick(() => initWorld())" :options="$options" {{ $attributes }} />
+
+    <x-dynamic-component
+        :component="WireUi::component('select')"
+        :options="$getOptions()"
+        x-init="$nextTick(() => initWorld())"
+        optionLabel="name"
+        optionValue="id"
+        {{ $attributes }} />
+
+
     <script>
         (() => {
             const el = (parent = window.document) => parent.querySelector('[id="{{ $uid }}"]');
