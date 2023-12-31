@@ -4,6 +4,8 @@ namespace WeblaborMx\WorldUi\Components;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use ReflectionClass;
+use ReflectionProperty;
 use WeblaborMx\World\Entities\Division;
 use WireUi\View\Components\Select;
 
@@ -14,6 +16,12 @@ abstract class WorldComponent extends Select
 
     /** @return Division[] */
     abstract protected function options(): array;
+
+    /** @var callable|null */
+    public mixed $formatUsing = null;
+
+    /** @var callable|null */
+    public mixed $filterUsing = null;
 
     public function __construct()
     {
@@ -31,21 +39,31 @@ abstract class WorldComponent extends Select
     public function render(): \Closure
     {
         return function (array $data) {
-            // Automatically inherit WireUI options
-            $data['attributes']->setAttributes(
-                collect($data)->filter(
-                    fn ($v, $k) => !str_starts_with($k, '__') && $k !== 'attributes' && is_scalar($v)
-                )->merge($data['attributes'])
-                    ->toArray()
-            );
+            $classProps = collect((new ReflectionClass(self::class))
+                ->getProperties(ReflectionProperty::IS_PUBLIC))
+                ->where('class', self::class)
+                ->pluck('name');
 
             // Override the props of the parent without constructor reassingment
             collect($data['attributes'])
                 ->intersectByKeys($this->extractPublicProperties())
                 ->except('attributes')
-                ->each(function ($v, $k) {
+                ->each(function ($v, $k) use ($classProps, $data) {
                     $this->{$k} = $v;
+
+                    if ($classProps->contains($k)) {
+                        // Prevent the WorldUI prop from passing to WireUI
+                        unset($data['attributes'][$k]);
+                    }
                 });
+
+            // Automatically pass WireUI options to $attributes
+            $data['attributes']->setAttributes(
+                collect($data)->only(Select::extractConstructorParameters())
+                    ->merge($data['attributes'])
+                    ->except('options')
+                    ->all()
+            );
 
             return parent::render()($data);
         };
@@ -62,6 +80,14 @@ abstract class WorldComponent extends Select
             function () {
                 $data = collect($this->options())
                     ->sortBy('name');
+
+                if ($this->filterUsing) {
+                    $data = $data->filter($this->filterUsing);
+                }
+
+                if ($this->formatUsing) {
+                    $data = $data->map($this->formatUsing);
+                }
 
                 if ($this->regex) {
                     $data = $data->map(function (Division $v) {
