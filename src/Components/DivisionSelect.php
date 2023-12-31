@@ -2,11 +2,13 @@
 
 namespace WeblaborMx\WorldUi\Components;
 
+use WeblaborMx\World\Entities\Division;
+
 class DivisionSelect extends WorldComponent
 {
-    protected function endpoint(): string
+    protected function options(): array
     {
-        return "/division/{$this->id}/children?fields=id,name";
+        return Division::getChildren($this->id, ['id', 'name']) ?? [];
     }
 
     public function __construct(

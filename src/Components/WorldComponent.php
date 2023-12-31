@@ -4,8 +4,7 @@ namespace WeblaborMx\WorldUi\Components;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\View\ComponentAttributeBag;
-use WeblaborMx\World\World;
+use WeblaborMx\World\Entities\Division;
 use WireUi\View\Components\Select;
 
 abstract class WorldComponent extends Select
@@ -13,7 +12,8 @@ abstract class WorldComponent extends Select
     protected int $cacheMinutes = 1;
     public ?string $regex = null;
 
-    abstract protected function endpoint(): string;
+    /** @return Division[] */
+    abstract protected function options(): array;
 
     public function __construct()
     {
@@ -60,17 +60,21 @@ abstract class WorldComponent extends Select
             $key,
             now()->addMinutes($this->cacheMinutes),
             function () {
-                $data = collect(World::getClient()->makeSafeCall($this->endpoint()));
+                $data = collect($this->options())
+                    ->sortBy('name');
 
                 if ($this->regex) {
-                    $data = $data->map(function ($v) {
-                        preg_match("/$this->regex/", $v['name'], $matches);
+                    $data = $data->map(function (Division $v) {
+                        preg_match("/$this->regex/", $v->name, $matches);
+
                         if ($matches) {
-                            $v['name'] = $matches[0];
+                            $v->name = $matches[0];
                         }
 
                         return $v;
-                    })->filter(fn ($v) => !(is_null($v) || empty($v)));
+                    })->filter(
+                        fn (Division $v) => !(is_null($v->name) || empty($v->name))
+                    );
                 }
 
                 return $data;
@@ -86,6 +90,13 @@ abstract class WorldComponent extends Select
 
     protected function cacheKey(): string
     {
-        return md5("worldui.native-select:{$this->endpoint()}{$this->regex}");
+        $data = collect($this->extractConstructorParameters())
+            ->map(fn ($v) => $this->{$v})
+            ->filter(fn ($v) => is_scalar($v))
+            ->implode('|');
+
+        $data = substr($data, 0, 128);
+
+        return md5("worldui.native-select:{$data}|{$this->regex}");
     }
 }
