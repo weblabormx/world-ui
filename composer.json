@@ -20,7 +20,7 @@
         "php": "^8.1",
         "wireui/wireui": "^1.17",
         "illuminate/support": "*",
-        "weblabormx/world": "^1.0.4"
+        "weblabormx/world": "^1.0.5"
     },
     "extra": {
         "laravel": {
