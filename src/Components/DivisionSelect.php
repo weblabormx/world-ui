@@ -8,7 +8,7 @@ class DivisionSelect extends WorldComponent
 {
     protected function options(): array
     {
-        return Division::getChildren($this->id, ['id', 'name']) ?? [];
+        return Division::getChildren(intval($this->id), ['id', 'name']) ?? [];
     }
 
     public function __construct(
