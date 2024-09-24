@@ -17,6 +17,8 @@ class WorldUiServiceProvider extends ServiceProvider
 
     public function boot()
     {
+        if (!config('worldui.api_token')) return;
+
         World::setApiBase(config('worldui.endpoint'));
         World::init(config('worldui.api_token'));
     }
