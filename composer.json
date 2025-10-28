@@ -18,7 +18,7 @@
     ],
     "require": {
         "php": "^8.1",
-        "wireui/wireui": "^1.17",
+        "wireui/wireui": "^2.4.3",
         "illuminate/support": "*",
         "weblabormx/world": "^1.0.5"
     },
