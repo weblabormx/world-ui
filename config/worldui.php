@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Config;
 use WeblaborMx\WorldUi\Components;
 
 return [

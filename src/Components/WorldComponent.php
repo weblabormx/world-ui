@@ -2,74 +2,39 @@
 
 namespace WeblaborMx\WorldUi\Components;
 
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use ReflectionClass;
 use ReflectionProperty;
 use WeblaborMx\World\Entities\Division;
-use WireUi\View\Components\Select;
+use WireUi\Attributes\Process;
+use WireUi\Components\Select\Base as Select;
 
 abstract class WorldComponent extends Select
 {
     protected int $cacheMinutes = 1;
-    public ?string $regex = null;
 
     /** @return Division[] */
     abstract protected function options(): array;
 
+    public ?string $regex = null;
     /** @var callable|null */
     public mixed $formatUsing = null;
-
     /** @var callable|null */
     public mixed $filterUsing = null;
 
-    public function __construct()
+    #[Process()]
+    protected function process(): void
     {
-        parent::__construct(
-            optionLabel: 'name',
-            optionValue: 'id'
-        );
+        $this->optionLabel = 'name';
+        $this->optionValue = 'id';
+        $this->options = $this->getOptions();
+
+        parent::process();
     }
 
-    protected function getView(): string
-    {
-        return 'worldui::components.select';
-    }
-
-    public function render(): \Closure
-    {
-        return function (array $data) {
-            $classProps = collect((new ReflectionClass(self::class))
-                ->getProperties(ReflectionProperty::IS_PUBLIC))
-                ->where('class', self::class)
-                ->pluck('name');
-
-            // Override the props of the parent without constructor reassingment
-            collect($data['attributes'])
-                ->intersectByKeys($this->extractPublicProperties())
-                ->except('attributes')
-                ->each(function ($v, $k) use ($classProps, $data) {
-                    $this->{$k} = $v;
-
-                    if ($classProps->contains($k)) {
-                        // Prevent the WorldUI prop from passing to WireUI
-                        unset($data['attributes'][$k]);
-                    }
-                });
-
-            // Automatically pass WireUI options to $attributes
-            $data['attributes']->setAttributes(
-                collect($data)->only(Select::extractConstructorParameters())
-                    ->merge($data['attributes'])
-                    ->except('options')
-                    ->all()
-            );
-
-            return parent::render()($data);
-        };
-    }
-
-    public function getOptions(): Collection
+    private function getOptions(): Collection
     {
         $key = $this->cacheKey();
 
@@ -99,7 +64,7 @@ abstract class WorldComponent extends Select
 
                         return $v;
                     })->filter(
-                        fn (Division $v) => !(is_null($v->name) || empty($v->name))
+                        fn(Division $v) => !(is_null($v->name) || empty($v->name))
                     );
                 }
 
@@ -114,15 +79,33 @@ abstract class WorldComponent extends Select
         return $options;
     }
 
-    protected function cacheKey(): string
+    /** @return string[] */
+    protected function cacheParameters(): array
     {
-        $data = collect($this->extractConstructorParameters())
-            ->map(fn ($v) => $this->{$v})
-            ->filter(fn ($v) => is_scalar($v))
+        return [];
+    }
+
+    private function cacheKey(): string
+    {
+        $data = collect($this->getCacheParameters())
+            ->map(function ($v) {
+                if (isset($this->{$v})) {
+                    return $this->{$v};
+                }
+
+                return $this->attributes->get($v, '');
+            })
+            ->filter(fn($v) => is_scalar($v))
             ->implode('|');
 
         $data = substr($data, 0, 128);
 
         return md5("worldui.native-select:{$data}|{$this->regex}");
+    }
+
+    /** @return string[] */
+    private function getCacheParameters(): array
+    {
+        return array_merge(['regex', 'formatUsing', 'filterUsing'], $this->cacheParameters());
     }
 }

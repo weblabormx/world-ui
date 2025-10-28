@@ -6,20 +6,20 @@ use WeblaborMx\World\Entities\Division;
 
 class DivisionSearchSelect extends WorldComponent
 {
-
     protected function options(): array
     {
+        $search = $this->attributes->get('search', '');
+        $parentId = $this->attributes->get('parentId');
+
         return Division::search(
-            "$this->search",
-            $this->parentId,
+            $search,
+            is_null($parentId) ? null : intval($parentId),
             ['id', 'name']
         ) ?? [];
     }
 
-    public function __construct(
-        public ?string $search = null,
-        public string|int|null $parentId = null
-    ) {
-        parent::__construct();
+    protected function cacheParameters(): array
+    {
+        return ['search', 'parentId'];
     }
 }
